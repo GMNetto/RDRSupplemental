@@ -1,0 +1,56 @@
+gpu: "0"
+multi_gpu: null
+
+model_name: SuperGlue
+rigid: false
+
+full: False
+fast_test: False
+
+evaluate: True
+resume: True
+ckpt_dir: ./pretrained/modelnet40/
+
+# general args
+batch_size: 8
+pretrain: rigid.pth
+
+num_points: 1024
+
+DEVICE: cuda
+
+dataset: ModelNet40
+
+# miscalleneous
+workers: 8
+
+BCPD:
+  LMBD: 20000000
+  BETA: 2
+  GAMMA: 3
+
+# GM model parameters
+GM:
+  FEATURE_CHANNEL: 256
+  OT_ITER_NUM: 20
+  PROJ_FEAT: 256
+  NEIGHBORSNUM: 20
+  ATTEND: attentiontransformer
+  NATTEND: 4
+  ALPHASCORE: False
+  SKADDCR: True
+
+DATASET:
+  NOISE_TYPE: crop  #clean, jitter, crop
+  UNSEEN: True
+  ROT_MAG: 45.0
+  TRANS_MAG: 0.5
+  SCALE_MAG: 1.0
+  PARTIAL_P_KEEP:
+    - 0.7
+    - 0.7
+
+EVAL:
+  ITERATION: True
+  CYCLE: True
+  ITERATION_NUM: 2

@@ -1,0 +1,56 @@
+gpu: "0"
+multi_gpu: null
+
+model_name: SuperGlue
+
+full: False
+fast_test: False
+
+# general args
+batch_size: 8
+epochs: 165
+learning_rate: 0.001
+
+optimizer: SGD
+pretrain: null # Example of how to finetune model: ./experiment/Serial_SuperGlue_ModelNet40-2021-10-01_06-20/checkpoints/SuperGlue_157_1.7852.pth
+weight_decay: 0.0001
+step_size: 150
+gamma: 0.25
+
+num_points: 1024
+
+DEVICE: cuda
+
+evaluate: False
+
+dataset: ModelNet40
+
+# miscalleneous
+workers: 8
+
+BCPD:
+  LMBD: 2000000
+  BETA: 2
+  GAMMA: 3
+  DEEPG: False
+
+# GM model parameters
+GM:
+  FEATURE_CHANNEL: 256
+  OT_ITER_NUM: 20
+  PROJ_FEAT: 256
+  NEIGHBORSNUM: 20
+  ATTEND: attentiontransformer # linear
+  NATTEND: 4
+  ALPHASCORE: False
+  SKADDCR: True
+
+DATASET:
+  NOISE_TYPE: crop  # clean, jitter, crop
+  UNSEEN: True
+  ROT_MAG: 45.0
+  TRANS_MAG: 0.5
+  SCALE_MAG: 1.0
+  PARTIAL_P_KEEP:
+    - 0.7
+    - 0.7

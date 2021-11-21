@@ -1,0 +1,60 @@
+gpu: "0"
+multi_gpu: null
+
+model_name: SuperGlue
+
+full: False
+fast_test: False
+
+evaluate: True
+resume: True
+ckpt_dir: ./pretrained/rmanet/
+
+# general args
+batch_size: 4
+pretrain: nonrigidself.pth # nonrigidsupervised.pth
+num_points: 1024 # 2048
+
+DEVICE: cuda
+
+dataset: RMANet
+
+# miscalleneous
+workers: 4
+
+BCPD:
+  LMBD: 2
+  BETA: 2 # 0.5
+  GAMMA: 3
+
+# GM model parameters
+GM:
+  FEATURE_CHANNEL: 256
+  OT_ITER_NUM: 20
+  PROJ_FEAT: 256
+  NEIGHBORSNUM: 20
+  ATTEND: attentiontransformer # linear
+  NATTEND: 4
+  ALPHASCORE: False
+  SKADDCR: True
+
+
+DATASET:
+  NOISE_TYPE: crop  # clean, jitter, crop, outlier, holes
+  POINT_NUM: 1024
+  UNSEEN: False
+  ROT_MAG: 0.0
+  TRANS_MAG: 0.0
+  SCALE_MAG: 1.0
+  PARTIAL_P_KEEP:
+    - 0.7
+    - 0.7
+  NHOLES: 12
+  KHOLES: 20
+
+EVAL:
+  CYCLE: False
+  LOOP: False
+
+
+
