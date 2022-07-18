@@ -1,6 +1,11 @@
 # Robust Dense Registration
 
 Implementation of the paper with datasets and examples used in the original paper.
+```
+Title: Robust point-cloud registration based on dense point matching and probabilistic modeling
+Journal: The Visual Computer
+DOI: 10.1007/s00371-022-02525-y
+```
 
 ### Requirements
 To create a virtual environment and install the required dependences please run:
