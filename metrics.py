@@ -137,16 +137,34 @@ def matching_accuracy(pmat_pred, pmat_gt, ns):
             'acc_pred_as_match': acc_pred_as_match}
 
 def calcorrespondpc(pmat_pred, pc2_gt):
-    pc2 = torch.zeros_like(pc2_gt).to(pc2_gt)
+    # print('pmat', torch.max(pmat_pred))
+    # print('calculate corr', pmat_pred.shape, pc2_gt.shape)
+    pc2 = torch.zeros((pc2_gt.shape[0],pmat_pred.shape[1],pc2_gt.shape[2])).to(pc2_gt)
+    # print('calculate corr', pmat_pred.shape, pc2_gt.shape, pc2.shape)
     pmat_pred_index = np.zeros((pc2_gt.shape[0], pc2_gt.shape[1]), dtype=int)
+    
     for i in range(pmat_pred.shape[0]):
         pmat_predi_index1 = torch.where(pmat_pred[i])
         pmat_predi_index00 = torch.where(torch.sum(pmat_pred[i], dim=0) == 0)[0]  #n row sum->1，1024
         pmat_predi_index01 = torch.where(torch.sum(pmat_pred[i], dim=1) == 0)[0]  #n col sum->1024,1
-        pc2[i, torch.cat((pmat_predi_index1[0], pmat_predi_index01))] = \
-            pc2_gt[i, torch.cat((pmat_predi_index1[1], pmat_predi_index00))]
-        pmat_pred_index[i, pmat_predi_index1[0].cpu().numpy()] = pmat_predi_index1[1].cpu().numpy()
-        pmat_pred_index[i, pmat_predi_index01.cpu().numpy()] = pmat_predi_index00.cpu().numpy()
+        
+        
+        # print(torch.sum(pmat_pred[i], dim=0), torch.sum(torch.sum(pmat_pred[i], dim=0)))
+
+        # print(torch.sum(pmat_pred[i], dim=1), torch.sum(torch.sum(pmat_pred[i], dim=1)))
+        
+        # positions in cloud 1 where there are matches followed by where it is 0
+        # pc2[i, torch.cat((pmat_predi_index1[0], pmat_predi_index01))] = \
+        #     pc2_gt[i, torch.cat((pmat_predi_index1[1], pmat_predi_index00))]
+        den = torch.matmul(pmat_pred[i,...], pc2_gt[i,...]) 
+        div = 1 / (torch.sum(pmat_pred[i], dim=1) + 1e-10)
+        div = torch.diag_embed(1 / div)
+        pc2[i,...] = torch.matmul(div, den)
+        # print(den.shape, div.shape)
+        # pc2[i,...] = den / div
+        
+        # pmat_pred_index[i, pmat_predi_index1[0].cpu().numpy()] = pmat_predi_index1[1].cpu().numpy()
+        # pmat_pred_index[i, pmat_predi_index01.cpu().numpy()] = pmat_predi_index00.cpu().numpy()
     return pc2, pmat_pred_index
 
 def square_distance(src, dst):
@@ -311,6 +329,7 @@ def SVDslover(src_o, tgt_o, s_perm_mat):
     """
     weights = torch.sum(s_perm_mat, dim=2)
     weights_normalized = weights[..., None] / (torch.sum(weights[..., None], dim=1, keepdim=True) + 1e-5)
+    # print('weights_normalized', weights_normalized.shape)
     centroid_src_o = torch.sum(src_o * weights_normalized, dim=1)
     centroid_tgt_o = torch.sum(tgt_o * weights_normalized, dim=1)
     src_o_centered = src_o - centroid_src_o[:, None, :]

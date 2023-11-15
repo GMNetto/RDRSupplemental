@@ -5,6 +5,7 @@
 import os
 import glob
 import h5py
+import re
 import torch
 import numpy as np
 from typing import List
@@ -246,6 +247,72 @@ def get_transforms(partition: str, num_points: int = 1024,
         raise NotImplementedError(f'{noise_type} not supported.')
 
     return transforms
+
+class FingerPrints(Dataset):
+
+    def sorted_nicely(self, l ): 
+        """ Sort the given iterable in the way that humans expect.""" 
+        convert = lambda text: int(text) if text.isdigit() else text 
+        alphanum_key = lambda key: [ convert(c) for c in re.split('([0-9]+)', key) ] 
+        return sorted(l, key = alphanum_key)
+
+    def __init__(self, partition='train', unseen=False, transform=None, crossval = False, train_part=False, proportion=0.8, fast_test = False):
+        # data_shape:[B, N, 3]
+        self.gallery = []
+        self.gallery_sizes = []
+        DATA_DIR = "/Users/I861962/Downloads/dataset/"
+        for txt_name in self.sorted_nicely(glob.glob(os.path.join(DATA_DIR, 'gallery_points', '*.txt'))):
+            gallery = np.loadtxt(txt_name)
+            gallery = np.c_[gallery, np.zeros(gallery.shape[0])]
+            self.gallery.append(gallery)
+            # self.gallery_sizes.append(gallery.shape[0])
+
+        tmp = self.gallery
+        length = len(tmp)
+        self.gallery = []
+        for i in range(length):
+            for _ in range(length):
+                self.gallery.append(np.copy(tmp[i]))
+                self.gallery_sizes.append(tmp[i].shape[0])
+
+        self.query = []
+        self.query_sizes = []
+        for txt_name in self.sorted_nicely(glob.glob(os.path.join(DATA_DIR, 'query_points', '*.txt'))):
+            query = np.loadtxt(txt_name)
+            query = np.c_[query, np.zeros(query.shape[0])]
+            self.query.append(query)
+            # self.query = np.concatenate(all_query, axis=0)
+            self.query_sizes.append(query.shape[0])
+
+
+        self.query = len(self.query)*self.query
+        self.query_sizes = len(self.query_sizes)*self.query_sizes
+
+
+    def __getitem__(self, item):
+        
+        print("loading item", item, self.gallery[item].shape, self.query[item].shape)
+
+        # Normals currently not being used
+        src_o3 = open3d.geometry.PointCloud()
+        ref_o3 = open3d.geometry.PointCloud()
+        src_o3.points = open3d.utility.Vector3dVector(self.gallery[item])
+        ref_o3.points = open3d.utility.Vector3dVector(self.query[item])
+        src_o3.estimate_normals(search_param=open3d.geometry.KDTreeSearchParamHybrid(radius=10, max_nn=30))
+        ref_o3.estimate_normals(search_param=open3d.geometry.KDTreeSearchParamHybrid(radius=10, max_nn=30))
+
+
+        n1_gt = self.gallery_sizes[item]
+        n2_gt = self.query_sizes[item]
+
+        ret_dict = {'Ps': [torch.Tensor(x) for x in [self.query[item], self.gallery[item]]],
+                    'Fs': [torch.Tensor(x) for x in [np.asarray(ref_o3.normals), np.asarray(src_o3.normals)]],
+                    'ns': [torch.tensor(x) for x in [n2_gt, n1_gt]],
+                    }
+        return ret_dict
+        
+    def __len__(self):
+        return len(self.gallery)
 
 class ModelNet40(Dataset):
     def __init__(self, partition='train', unseen=False, transform=None, crossval = False, train_part=False, proportion=0.8, fast_test = False):
@@ -655,6 +722,12 @@ def get_datasets(dataset_name='TOSCAMIT', partition='train', num_points=1024, un
                                     rot_mag = rot_mag, trans_mag = trans_mag, scale_mag = scale_mag, partial_p_keep = partial_p_keep)
         transforms = torchvision.transforms.Compose(transforms)
         datasets = ModelNet40(partition, unseen, transforms, crossval=False, train_part=train_part, fast_test=fast_test)
+
+    if dataset_name=='Fingerprints':
+        transforms = get_transforms(partition=partition, num_points=num_points , noise_type=noise_type,
+                                    rot_mag = rot_mag, trans_mag = trans_mag, scale_mag = scale_mag, partial_p_keep = partial_p_keep)
+        transforms = torchvision.transforms.Compose(transforms)
+        datasets = FingerPrints(partition, unseen, transforms, crossval=False, train_part=train_part, fast_test=fast_test)
 
     elif dataset_name=='ModelNet40TOSCAMITPartition':
         transforms = get_transforms(partition=partition, num_points=num_points , noise_type=noise_type,

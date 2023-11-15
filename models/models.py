@@ -17,11 +17,13 @@ def knn(x, k):
 
 
 def get_graph_feature(x, k=20):
+    k = min(k, x.shape[1])
     idx = knn(x, k=k)  # (batch_size, num_points, k)
     batch_size, num_points, _ = idx.size()
-    device = torch.device('cuda')
+    # device = torch.device('cuda')
 
-    idx_base = torch.arange(0, batch_size, device=device).view(-1, 1, 1) * num_points
+    # idx_base = torch.arange(0, batch_size, device=device).view(-1, 1, 1) * num_points
+    idx_base = torch.arange(0, batch_size).view(-1, 1, 1) * num_points
 
     idx = idx + idx_base
 

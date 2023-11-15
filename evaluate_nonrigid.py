@@ -95,11 +95,11 @@ def main():
 
     #load pretrained model
     pretrain = args.ckpt_dir + args.pretrain
-    model.load_state_dict(torch.load(pretrain))
+    model.load_state_dict(torch.load(pretrain, map_location='cpu'))
     print('load model %s'%pretrain)
     logger.info('load model %s'%pretrain)
 
-    model.cuda()
+    # model.cuda()
 
     print('using Kernel based covariance')
     logger.info('using Kernel based covariance')
